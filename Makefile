@@ -1,8 +1,10 @@
 build:
-	@go build -o ./bin/fileserver
+	@go build -o ./bin/syncserver ./server
+	@go build -o ./bin/syncclient ./client
 	
 run: build
-	@./bin/fileserver
+	@./bin/syncserver
+	@./bin/syncclient
 	
 
 test:

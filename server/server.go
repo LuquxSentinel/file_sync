@@ -3,22 +3,30 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"io"
 	"log"
 	"net"
+	"os"
 )
 
-type FileServer struct{}
+type FileServer struct {
+	listenAddress string
+}
+
+func NewFileServer(listenAddr string) *FileServer {
+	return &FileServer{
+		listenAddress: listenAddr,
+	}
+}
 
 func (fs *FileServer) start() {
-	listener, err := net.Listen("tcp", ":8000")
+	listener, err := net.Listen("tcp", fs.listenAddress)
 	if err != nil {
 		log.Fatal(err)
 	}
-	
+
 	log.Println("Server started & Listening....")
-	
+
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -32,17 +40,44 @@ func (fs *FileServer) start() {
 
 func (fs *FileServer) readLoop(conn net.Conn) {
 	buf := new(bytes.Buffer)
+	// var size int64
+	var filename string
+
+	// get read filename from connection
+	binary.Read(conn, binary.LittleEndian, &filename)
+
+	log.Println(filename)
+
+	file, err := os.Create(filename)
+
+	if err != nil {
+		log.Panicln(err)
+		return
+	}
+
 	for {
-		var size int64
-		binary.Read(conn, binary.LittleEndian, &size)
-		_ , err := io.Copy(buf, conn)
-		if err != nil {
-			log.Panic(err)
+
+		n, err := io.Copy(buf, conn)
+
+		if err == io.EOF {
+			log.Panicln(err)
+			break
 		}
 
-		fmt.Println(string(buf.Bytes()))
+		if err != nil {
+			if err == io.EOF {
+				log.Panicln(err)
+				break
+			}
 
+			log.Panic(err)
+			break
+		}
+
+		_, err = file.Write(buf.Bytes()[:n])
 	}
+
+	log.Printf("File : %s  successfully received and saved.\n", filename)
 }
 
 //func sendFile(size int) error {
