@@ -2,11 +2,12 @@ package main
 
 import (
 	"bytes"
-	"encoding/binary"
+	"encoding/gob"
 	"io"
 	"log"
 	"net"
 	"os"
+	"time"
 )
 
 type FileServer struct {
@@ -41,17 +42,31 @@ func (fs *FileServer) start() {
 func (fs *FileServer) readLoop(conn net.Conn) {
 	buf := new(bytes.Buffer)
 	// var size int64
+	// filenameBytes := make([]byte, 35)
 	var filename string
 
-	// get read filename from connection
-	binary.Read(conn, binary.LittleEndian, &filename)
+	// filenameBuffer := new(bytes.Buffer)
 
+	time.Sleep(5 * time.Second)
+	// get read filename from connection
+	// err := binary.Read(conn, binary.LittleEndian, &filename)
+
+	err := gob.NewDecoder(conn).Decode(&filename)
+	if err != nil {
+		log.Panicln(err)
+		return
+	}
+
+	// filename := string(filenameBytes)
 	log.Println(filename)
+
+	// return
 
 	file, err := os.Create(filename)
 
 	if err != nil {
-		log.Panicln(err)
+		log.Panic(err)
+
 		return
 	}
 
@@ -59,10 +74,10 @@ func (fs *FileServer) readLoop(conn net.Conn) {
 
 		n, err := io.Copy(buf, conn)
 
-		if err == io.EOF {
-			log.Panicln(err)
-			break
-		}
+		// if err == io.EOF {
+		// 	log.Panicln(err)
+		// 	break
+		// }
 
 		if err != nil {
 			if err == io.EOF {
@@ -75,6 +90,7 @@ func (fs *FileServer) readLoop(conn net.Conn) {
 		}
 
 		_, err = file.Write(buf.Bytes()[:n])
+		log.Printf("error writing to file : %v\n", err)
 	}
 
 	log.Printf("File : %s  successfully received and saved.\n", filename)

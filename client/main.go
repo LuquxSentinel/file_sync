@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"regexp"
 )
 
@@ -18,15 +17,17 @@ func main() {
 
 	}
 
-	// new tcp client
-	client, err := NewClient("tcp", networkAddress)
-	if err != nil {
-		// error creation client | connecting to tcp server
-		log.Panicln(err)
-	}
+	// // new tcp client
+	// client, err := NewClient("tcp", networkAddress)
+	// if err != nil {
+	// 	// error creation client | connecting to tcp server
+	// 	log.Panicln(err)
+	// }
 
-	// listen and handle file changes
-	client.fileChangeListener()
+	// // listen and handle file changes
+	// client.fileChangeListener()
+
+	fileChangeListener()
 
 }
 
